@@ -12,7 +12,7 @@ import (
 	"context"
 	"io"
 	"net/http"
-
+	"fmt"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/utilities"
 	"google.golang.org/grpc"
@@ -70,7 +70,7 @@ func local_request_SubscriptionService_GetFeatureMatrix_0(ctx context.Context, m
 func request_SubscriptionService_UpdateSubscription_0(ctx context.Context, marshaler runtime.Marshaler, client SubscriptionServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var protoReq UpdateSubscriptionRequest
 	var metadata runtime.ServerMetadata
-
+	fmt.Println("ALAN: request_SubscriptionService_UpdateSubscription_0,1")
 	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq.Patch); err != nil && err != io.EOF {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
@@ -150,6 +150,7 @@ func RegisterSubscriptionServiceHandlerServer(ctx context.Context, mux *runtime.
 	})
 
 	mux.Handle("PATCH", pattern_SubscriptionService_UpdateSubscription_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+		fmt.Println("ALAN: 153,pattern_SubscriptionService_UpdateSubscription_0,1")
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		var stream runtime.ServerTransportStream
@@ -260,6 +261,7 @@ func RegisterSubscriptionServiceHandlerClient(ctx context.Context, mux *runtime.
 	})
 
 	mux.Handle("PATCH", pattern_SubscriptionService_UpdateSubscription_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+		fmt.Println("ALAN: 264,pattern_SubscriptionService_UpdateSubscription_0,1")
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)

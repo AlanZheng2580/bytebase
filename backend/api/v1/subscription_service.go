@@ -3,7 +3,7 @@ package v1
 import (
 	"context"
 	"time"
-
+	"fmt"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -65,20 +65,27 @@ func (*SubscriptionService) GetFeatureMatrix(_ context.Context, _ *v1pb.GetFeatu
 
 // UpdateSubscription updates the subscription license.
 func (s *SubscriptionService) UpdateSubscription(ctx context.Context, request *v1pb.UpdateSubscriptionRequest) (*v1pb.Subscription, error) {
+	fmt.Println("ALAN: UpdateSubscription, 1")
 	principalID, ok := ctx.Value(common.PrincipalIDContextKey).(int)
 	if !ok {
+		fmt.Println("ALAN: UpdateSubscription,2")
 		return nil, status.Errorf(codes.Internal, "principal ID not found")
 	}
+	fmt.Println("ALAN: UpdateSubscription,3")
+	fmt.Printf("ALAN: U,principalID=%d\n", principalID)
+	fmt.Printf("ALAN: U,License=%s\n",request.Patch.License)
 	if err := s.licenseService.StoreLicense(ctx, &enterprise.SubscriptionPatch{
 		UpdaterID: principalID,
 		License:   request.Patch.License,
 	}); err != nil {
 		if common.ErrorCode(err) == common.Invalid {
+			fmt.Printf("ALAN, U,InvalidaArgument=%s\n", err.Error())
 			return nil, status.Errorf(codes.InvalidArgument, err.Error())
 		}
+		fmt.Printf("ALAN, U,failed to store license=%s\n", err.Error())
 		return nil, status.Errorf(codes.Internal, "failed to store license: %v", err.Error())
 	}
-
+	fmt.Println("ALAN: UpdateSubscription, 4")
 	return s.loadSubscription(ctx)
 }
 

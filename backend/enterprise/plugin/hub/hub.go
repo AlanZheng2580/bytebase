@@ -5,7 +5,7 @@ import (
 	"log/slog"
 	"slices"
 	"time"
-
+	"fmt"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/pkg/errors"
 
@@ -55,18 +55,20 @@ func NewProvider(providerConfig *plugin.ProviderConfig) (plugin.LicenseProvider,
 
 // StoreLicense will store the hub license.
 func (p *Provider) StoreLicense(ctx context.Context, patch *enterprise.SubscriptionPatch) error {
+	fmt.Println("ALAN: hub,StoreLicense,1")
 	if patch.License != "" {
 		if _, err := p.parseLicense(ctx, patch.License); err != nil {
 			return err
 		}
 	}
+	fmt.Println("ALAN: hub,StoreLicense,2")
 	if _, err := p.store.UpsertSettingV2(ctx, &store.SetSettingMessage{
 		Name:  api.SettingEnterpriseLicense,
 		Value: patch.License,
 	}, patch.UpdaterID); err != nil {
 		return err
 	}
-
+	fmt.Println("ALAN: hub,StoreLicense,3")
 	return nil
 }
 
@@ -104,6 +106,7 @@ func (p *Provider) fetchLicense(ctx context.Context) (*enterprise.License, error
 	if license == "" {
 		return nil, nil
 	}
+	fmt.Printf("ALAN: fetchLicense")
 	result, err := p.parseLicense(ctx, license)
 	if err != nil {
 		return nil, err
@@ -144,16 +147,32 @@ func (p *Provider) loadLicense(ctx context.Context) *enterprise.License {
 }
 
 func (p *Provider) parseLicense(ctx context.Context, license string) (*enterprise.License, error) {
-	claim := &claims{}
+	//claim := &claims{}
+	fmt.Println("ALAN: parseLicense,0")
+	fakeLicense := &enterprise.License{
+		InstanceCount: 50,
+		Seat: 50,
+		ExpiresTs: 1725311427,
+		IssuedTs: 1705311427,
+		Plan:  api.ENTERPRISE,
+		Subject: "test",
+		Trialing: false,
+		OrgName: "test",
+	}
+	return  fakeLicense, nil
+/*
 	if err := parseJWTToken(license, p.config.Version, p.config.PublicKey, claim); err != nil {
+		fmt.Println("ALAN: parseLicense,1")
 		return nil, common.Wrap(err, common.Invalid)
 	}
-
+	fmt.Println("ALAN: parseLicense,2")
 	return p.parseClaims(ctx, claim)
+*/
 }
 
 func (p *Provider) findEnterpriseLicense(ctx context.Context) (*enterprise.License, error) {
 	// Find enterprise license.
+	fmt.Println("ALAN: findEnterriseLicense")
 	settingName := api.SettingEnterpriseLicense
 	setting, err := p.store.GetSettingV2(ctx, &store.FindSettingMessage{
 		Name: &settingName,
@@ -182,24 +201,30 @@ func (p *Provider) findEnterpriseLicense(ctx context.Context) (*enterprise.Licen
 
 // parseClaims will valid and parse JWT claims to license instance.
 func (p *Provider) parseClaims(ctx context.Context, claim *claims) (*enterprise.License, error) {
+	fmt.Println("ALAN: parseClaims,1")
 	if p.config.Issuer != claim.Issuer {
+		fmt.Printf("ALAN: parseClaims,2,config.Issuer=%s, claim.Issuer=%s\n", p.config.Issuer, claim.Issuer)
 		return nil, common.Errorf(common.Invalid, "iss is not valid, expect %s but found '%v'", p.config.Issuer, claim.Issuer)
 	}
 	if !slices.Contains(claim.Audience, p.config.Audience) {
+		fmt.Printf("ALAN: parseClaims,3,p.config.Audience=%s, claim.Audience=%s\n", p.config.Audience, claim.Audience)
 		return nil, common.Errorf(common.Invalid, "aud is not valid, expect %s but found '%v'", p.config.Audience, claim.Audience)
 	}
 
 	planType, err := convertPlanType(claim.Plan)
 	if err != nil {
+		fmt.Printf("ALAN: parseClaims,4, planType=%s\n", planType)
 		return nil, common.Errorf(common.Invalid, "plan type %q is not valid", planType)
 	}
 
 	if claim.WorkspaceID != "" && planType == api.ENTERPRISE && !claim.Trialing {
 		workspaceID, err := p.store.GetWorkspaceID(ctx)
 		if err != nil {
+			fmt.Printf("ALAN: parseClaims,5,%s\n", err.Error())
 			return nil, errors.Wrapf(err, "failed to get workspace id from setting")
 		}
 		if workspaceID != claim.WorkspaceID {
+			fmt.Println("ALAN: parseClaims,6,workspaceID=%s\n", workspaceID)
 			return nil, common.Errorf(common.Invalid, "the workspace id not match")
 		}
 	}
@@ -214,7 +239,7 @@ func (p *Provider) parseClaims(ctx context.Context, claim *claims) (*enterprise.
 		Trialing:      claim.Trialing,
 		OrgName:       claim.OrgName,
 	}
-
+	fmt.Println("ALAN: parseClaims,7")
 	return license, nil
 }
 

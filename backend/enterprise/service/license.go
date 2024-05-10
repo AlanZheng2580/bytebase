@@ -5,7 +5,7 @@ import (
 	"context"
 	"math"
 	"time"
-
+	"fmt"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/pkg/errors"
 
@@ -54,10 +54,11 @@ func NewLicenseService(mode common.ReleaseMode, store *store.Store) (*LicenseSer
 
 // StoreLicense will store license into file.
 func (s *LicenseService) StoreLicense(ctx context.Context, patch *enterprise.SubscriptionPatch) error {
+	fmt.Println("ALAN: StoreLicense,1")
 	if err := s.provider.StoreLicense(ctx, patch); err != nil {
 		return err
 	}
-
+	fmt.Println("ALAN: StoreLicense,2")
 	s.RefreshCache(ctx)
 	return nil
 }
